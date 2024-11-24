@@ -30,6 +30,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     private JButton exitButton;        // Exit button
     private JTextField wagesField;     // Wages text field
     private JTextField loansField;     // Loans text field
+    private JTestField otherField;     // Other income text field
     private JTextField totalIncomeField; // Total Income field
 
     // constructor - create UI  (dont need to change this)
@@ -51,6 +52,10 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         // Row 1 - Wages label followed by wages textbox
         JLabel wagesLabel = new JLabel("Wages");
         addComponent(wagesLabel, 1, 0);
+
+        // Row 2 - Other label for other forms of income
+        JLabel otherLabel = new JLabel("Other");
+        addComponent(otherLabel, 2, 0);
 
         // set up text field for entering wages
         // Could create method to do below (since this is done several times)
