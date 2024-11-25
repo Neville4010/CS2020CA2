@@ -186,6 +186,9 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         // otherwise calculate total income and update text field
         double totalIncome = (wages + otherIncome + loans) - (food + rent + otherSpending);
         totalIncomeField.setText(String.format("%.2f",totalIncome));  // format with 2 digits after the .
+        if (totalIncome < 0){
+            totalIncomeField.setForeground(Color.RED);
+        }
         return totalIncome;
     }
 
