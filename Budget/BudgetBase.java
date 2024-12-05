@@ -1,3 +1,4 @@
+package Budget;
 // base code for student budget assessment
 // Students do not need to use this code in their assessment, fine to junk it and do something different!
 //
@@ -11,7 +12,8 @@
 // Layout - Uses GridBag layout in a straightforward way, every component has a (column, row) position in the UI grid
 // Not the prettiest layout, but relatively straightforward
 // Students who use IntelliJ or Eclipse may want to use the UI designers in these IDEs , instead of GridBagLayout
-package Budget;
+
+
 
 // Swing imports
 import javax.swing.*;
@@ -19,10 +21,15 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.event.*;
 import java.awt.*;
+import java.util.Stack;
+
 
 // class definition
-public class BudgetBase extends JPanel {    // based on Swing JPanel
-
+public class BudgetBase extends JPanel 
+{    // based on Swing JPanel
+    Stack<GUIState> stateStack;
+    GUIState previousState;
+    GUIState currentState;
     // high level UI stuff
     JFrame topLevelFrame;  // top-level JFrame
     GridBagConstraints layoutConstraints = new GridBagConstraints(); // used to control layout
@@ -30,160 +37,175 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
     // widgets which may have listeners and/or values
     private JButton calculateButton;   // Calculate button
     private JButton exitButton;        // Exit button
+    private JButton undoButton;        // Undo button
+    private JComboBox<String> comboTimePeriod;  // JComboBox for time period selection
+    private String[] timePeriod = new String[] {"Weekly", "Monthly","Annually"};    // Selection values for combobox
     private JTextField wagesField;     // Wages text field
-    private JTextField otherIncomeField;     // Other income text field
     private JTextField loansField;     // Loans text field
+    private JTextField otherIncomeField;     // Other income text field
     private JTextField foodField;      // Food text field
     private JTextField rentField;      // Rent text field
     private JTextField otherSpendingField;     // Other spending field
     private JTextField totalSpendingField;     // Total spending field
-    private JTextField totalAmountField;       // Total amount field
     private JTextField totalIncomeField; // Total Income field
+    private JTextField totalAmountField;       // Total amount field
     private JTextField weeklyTotalField; // Weekly total amount field
     private JTextField monthlyTotalField; // Monthly total amount field
     private JTextField yearlyTotalField; // Yearly total amount field
-    private String[] timePeriod = new String[] {"Select...","Weekly", "Monthly","Annually"};
-    private double totalSpending;
-    private double totalIncome;
+    private double totalSpending;   // total spending amount double value
+    private double totalIncome; // total income amount double value
 
     // constructor - create UI  (dont need to change this)
-    public BudgetBase(JFrame frame) {
+    public BudgetBase(JFrame frame) 
+    {
         initComponents();  // initalise components
     }
 
     // initialise componenents
     // Note that this method is quite long.  Can be shortened by putting Action Listener stuff in a separate method
     // will be generated automatically by IntelliJ, Eclipse, etc
-    private void initComponents() {
+    private void initComponents() 
+    {
+        // initialising stack of states of GUI from GUIState Class
+        stateStack = new Stack<GUIState>();
+        // setting value of the previous GUI state
+        previousState = new GUIState();
+        // setting value of the current GUI state
+        currentState = new GUIState();
 
         // Top row (0) - "INCOME" label
         JLabel incomeLabel = new JLabel("INCOME");
-        addComponent(incomeLabel, 1, 0);
+        addComponent(incomeLabel, 0, 0);
 
         // Row 1 - Wages label followed by wages textbox
         JLabel wagesLabel = new JLabel("Wages");
-        addComponent(wagesLabel, 2, 0);
-
-        // Row 2 - Other label followed by wages textbox
-        JLabel otherLabel = new JLabel("Other");
-        addComponent(otherLabel, 3, 0);
-
+        addComponent(wagesLabel, 1, 0);
 
         // set up text field for entering wages
-        // Could create method to do below (since this is done several times)
-        wagesField = new JTextField("0.00", 10);   // blank initially, with 10 columns
+        wagesField = new JTextField("0", 10);   // blank initially, with 10 columns
         wagesField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
-        addComponent(wagesField, 2, 1);  
+        addComponent(wagesField, 1, 1);
+
+        // Row 2 - Loans label followed by loans textbox
+        JLabel loansLabel = new JLabel("Loans");
+        addComponent(loansLabel, 2, 0);
         
-        // Row 2 - Other income label with input textbox following
-        otherIncomeField = new JTextField("0.00", 10);   // blank initially, with 10 columns
+        // set up text box for entering loans
+        loansField = new JTextField("0", 10);   // blank initially, with 10 columns
+        loansField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
+        addComponent(loansField, 2, 1);
+
+        // Row 3 - Other label followed by wages textbox
+        JLabel otherLabel = new JLabel("Other");
+        addComponent(otherLabel, 3, 0);
+        
+        // set up text box for entering other income
+        otherIncomeField = new JTextField("0", 10);   // blank initially, with 10 columns
         otherIncomeField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         addComponent(otherIncomeField, 3, 1);
 
-        // Row 3 - Loans label followed by loans textbox
-        JLabel loansLabel = new JLabel("Loans");
-        addComponent(loansLabel, 4, 0);
-
-        // set up text box for entering loans
-        loansField = new JTextField("0.00", 10);   // blank initially, with 10 columns
-        loansField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
-        addComponent(loansField, 4, 1);
-
         // Row 4 - Expenditure label
         JLabel expenditureLabel = new JLabel("Expenditures");
-        addComponent(expenditureLabel, 6, 0);
+        addComponent(expenditureLabel, 4, 0);
 
         //Row 5 - Food outgoing label, followed by food outgoing field
         JLabel foodOutgoingLabel = new JLabel("Food");
-        addComponent(foodOutgoingLabel, 7, 0);
+        addComponent(foodOutgoingLabel, 5, 0);
 
         //Set up textbox to obtain food value
-        foodField = new JTextField("0.00", 10);
+        foodField = new JTextField("0", 10);
         foodField.setHorizontalAlignment(JTextField.RIGHT);
-        addComponent(foodField, 7, 1);
+        addComponent(foodField, 5, 1);
 
         //Row 6 - Rent outgoing label, followed by rent outgoing field
         JLabel rentOutgoingLabel = new JLabel("Rent");
-        addComponent(rentOutgoingLabel, 8, 0);
+        addComponent(rentOutgoingLabel, 6, 0);
 
         //Set up textbox to obtain rent value
-        rentField = new JTextField("0.00", 10);
+        rentField = new JTextField("0", 10);
         rentField.setHorizontalAlignment(JTextField.RIGHT);
-        addComponent(rentField, 8, 1);
+        addComponent(rentField, 6, 1);
 
         //Row 7 - Other outgoings label, followed by other outgoings field
         JLabel otherOutgoingsLabel = new JLabel("Other");
-        addComponent(otherOutgoingsLabel, 9, 0);
+        addComponent(otherOutgoingsLabel, 7, 0);
 
         //Set up textbox to obtain rent value
-        otherSpendingField = new JTextField("0.00", 10);
+        otherSpendingField = new JTextField("0", 10);
         otherSpendingField.setHorizontalAlignment(JTextField.RIGHT);
-        addComponent(otherSpendingField, 9, 1);
+        addComponent(otherSpendingField, 7, 1);
 
         // Row 8 - Total Income label followed by total income field
         JLabel totalIncomeLabel = new JLabel("Total Income");
-        addComponent(totalIncomeLabel, 10, 0);
+        addComponent(totalIncomeLabel, 8, 0);
 
         // set up text box for displaying total income.  Users can view, but cannot directly edit it
-        totalIncomeField = new JTextField("0.00", 10);   // 0 initially, with 10 columns
+        totalIncomeField = new JTextField("0", 10);   // 0 initially, with 10 columns
         totalIncomeField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         totalIncomeField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(totalIncomeField, 10, 1);  
+        addComponent(totalIncomeField, 8, 1);  
 
-        // Row 8 - Total Spending label followed by total spending field
+        // Row 9 - Total Spending label followed by total spending field
         JLabel totalSpendingLabel = new JLabel("Total Spending");
-        addComponent(totalSpendingLabel, 11, 0);
+        addComponent(totalSpendingLabel, 9, 0);
 
         // set up text box for displaying total spending.  Users can view, but cannot directly edit it
         totalSpendingField = new JTextField("0.00", 10);   // 0 initially, with 10 columns
         totalSpendingField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         totalSpendingField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(totalSpendingField, 11, 1); 
+        addComponent(totalSpendingField, 9, 1); 
 
-        // Row 8 - Total Amount label followed by total income field
+        // Row 10 - Total Amount label followed by total income field
         JLabel totalAmountLabel = new JLabel("Total Amount");
-        addComponent(totalAmountLabel, 12, 0);
+        addComponent(totalAmountLabel, 10, 0);
 
         // set up text box for displaying total amount.  Users can view, but cannot directly edit it
         totalAmountField = new JTextField("0.00", 10);   // 0 initially, with 10 columns
         totalAmountField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         totalAmountField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(totalAmountField, 12, 1);
+        addComponent(totalAmountField, 10, 1);
 
-        // Row 8 - Total Amount label followed by total income field
+        // Row 11 - Total weekly amount label followed by total weekly amount field
         JLabel weeklyTotalLabel = new JLabel("Weekly Total");
-        addComponent(weeklyTotalLabel, 13, 0);
+        addComponent(weeklyTotalLabel, 11, 0);
 
+        // set up text box for displaying weekly total amount.  Users can view, but cannot directly edit it
         weeklyTotalField = new JTextField("0.00", 10);   // 0 initially, with 10 columns
         weeklyTotalField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         weeklyTotalField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(weeklyTotalField, 14, 1);
+        addComponent(weeklyTotalField, 11, 1);
 
-        // Row 8 - Total Amount label followed by total income field
+        // Row 12 - Total month amount label followed by total monthly amount field
         JLabel monthlyTotalLabel = new JLabel("Monthly Total");
-        addComponent(monthlyTotalLabel, 14, 0);
+        addComponent(monthlyTotalLabel, 12, 0);
 
+        // set up text box for displaying monthly total amount.  Users can view, but cannot directly edit it
         monthlyTotalField = new JTextField("0.00", 10);   // 0 initially, with 10 columns
         monthlyTotalField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         monthlyTotalField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(monthlyTotalField, 14, 1); 
+        addComponent(monthlyTotalField, 12, 1); 
 
-        // Row 8 - Total Amount label followed by total income field
+        // Row 13 - Total yearly amount label followed by total yearly amount fieldd
         JLabel yearlyTotalLabel = new JLabel("Annual Total");
-        addComponent(yearlyTotalLabel, 15, 0);
+        addComponent(yearlyTotalLabel, 13, 0);
 
+        // set up text box for displaying yearly total amount.  Users can view, but cannot directly edit it
         yearlyTotalField = new JTextField("0.00", 10);   // 0 initially, with 10 columns
         yearlyTotalField.setHorizontalAlignment(JTextField.RIGHT) ;    // number is at right end of field
         yearlyTotalField.setEditable(false);    // user cannot directly edit this field (ie, it is read-only)
-        addComponent(yearlyTotalField, 15, 1); 
+        addComponent(yearlyTotalField, 13, 1); 
 
-        // Row 9 - Calculate Button
+        // Row 14 - Calculate Button
         calculateButton = new JButton("Calculate");
-        addComponent(calculateButton, 13, 0);  
+        addComponent(calculateButton, 14, 0);  
 
-        // Row 10 - Exit Button
+        // Row 14 - Undo Button
+        undoButton = new JButton("Undo");
+        addComponent(undoButton, 14, 1);
+
+        // Row 14 - Exit Button
         exitButton = new JButton("Exit");
-        addComponent(exitButton, 14, 0);  
+        addComponent(exitButton, 14, 2);  
 
         // set up  listeners (in a spearate method)
         initListeners();
@@ -191,7 +213,7 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
     // set up listeners
     // initially just for buttons, can add listeners for text fields
-    private void initListeners() {
+    public void initListeners() {
 
         // exitButton - exit program when pressed
         exitButton.addActionListener(new java.awt.event.ActionListener() {
@@ -209,7 +231,45 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             }
         });
 
-        JComboBox<String> comboTimePeriod = new JComboBox<String>(timePeriod);
+        undoButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                currentState = stateStack.pop();
+
+                // function to check if the state to undo to is different to what the field contains (to reduce doing an insert update again!!!!)
+                if(Double.parseDouble(currentState.wages)  != getTextFieldValue(wagesField))
+                {
+                    wagesField.setText(currentState.wages);
+                }
+
+                else if(Double.parseDouble(currentState.loans)  != getTextFieldValue(loansField))
+                {
+                    loansField.setText(currentState.loans);
+                }
+
+                else if(Double.parseDouble(currentState.otherIncome)  != getTextFieldValue(otherIncomeField))
+                {
+                    otherIncomeField.setText(currentState.otherIncome);
+                }
+
+                else if(Double.parseDouble(currentState.rent)  != getTextFieldValue(rentField))
+                {
+                    rentField.setText(currentState.rent);
+                }
+
+                else if(Double.parseDouble(currentState.food)  != getTextFieldValue(foodField))
+                {
+                    foodField.setText(currentState.food);
+                }
+
+                else if(Double.parseDouble(currentState.otherSpending)  != getTextFieldValue(otherSpendingField))
+                {
+                    otherSpendingField.setText(currentState.otherSpending);
+                }
+
+            }
+        });
+
+        comboTimePeriod = new JComboBox<String>(timePeriod);
         comboTimePeriod.setMaximumRowCount(4);
         addComponent(comboTimePeriod, 0, 0);
         add(comboTimePeriod);
@@ -217,55 +277,58 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         comboTimePeriod.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent event){
-                JComboBox<String> comboTimePeriod = (JComboBox<String>) event.getSource();
-                String dateSelected = (String) comboTimePeriod.getSelectedItem();
-                if (dateSelected.equals("Weekly")) {
-                    System.out.println("Weekly view has been selected.");
-                    comboTimePeriod.setForeground(Color.GREEN);
-                    weeklyTotalField.setText(String.format("%.2f",(calculateTotal())));
-                    monthlyTotalField.setText(String.format("%.2f",(calculateTotal() * 4.333333)));
-                    yearlyTotalField.setText(String.format("%.2f",(calculateTotal() * 52)));
-                }
-                else if (dateSelected.equals("Monthly")){
-                    System.out.println("Monthly view has been selected.");
-                    comboTimePeriod.setForeground(Color.GREEN);
-                    weeklyTotalField.setText(String.format("%.2f",(calculateTotal() / 4.333333)));
-                    monthlyTotalField.setText(String.format("%.2f",(calculateTotal())));
-                    yearlyTotalField.setText(String.format("%.2f",(calculateTotal() * 12)));
-                }
-                else if (dateSelected.equals("Annually")){
-                    System.out.println("Annual view has been selected.");
-                    comboTimePeriod.setForeground(Color.GREEN);
-                    weeklyTotalField.setText(String.format("%.2f",(calculateTotal() / 52)));
-                    monthlyTotalField.setText(String.format("%.2f",(calculateTotal() / 12)));
-                    yearlyTotalField.setText(String.format("%.2f",(calculateTotal())));
-                }
-
+                calculateTimePeriodValues();
             }
         });
-
+        
         DocumentListener textFieldChangeListener = new DocumentListener() {
             public void insertUpdate(DocumentEvent event) {
                 calculateTotalIncome();
                 calculateTotalSpending();
                 calculateTotal();
-            }
+                calculateTimePeriodValues();
+                
+                // make function to check if any state is "dirty/has been edited"
+                if(isStateChanged())
+                {
+                    GUIState temp = new GUIState(currentState);
+                    stateStack.push(temp);
 
+                    // create update state function that updates the current state to be inline with what's in the text field
+                    currentState.wages = wagesField.getText();
+                    currentState.loans = loansField.getText();
+                    currentState.otherIncome = otherIncomeField.getText();
+                    currentState.food = foodField.getText();
+                    currentState.rent = rentField.getText();
+                    currentState.otherSpending = otherSpendingField.getText();
+                }
+            }
+            @Override
             public void removeUpdate(DocumentEvent event) {
                 calculateTotalIncome();
                 calculateTotalSpending();
                 calculateTotal();
+                calculateTimePeriodValues();
+                if(Double.parseDouble(currentState.rent) != getTextFieldValue(rentField))
+                {
+                    previousState.rent = currentState.rent;
+                }
             }
-
+            @Override
             public void changedUpdate(DocumentEvent event) {
                 calculateTotalIncome();
                 calculateTotalSpending();
                 calculateTotal();
+                calculateTimePeriodValues();
+                if(Double.parseDouble(currentState.rent) != getTextFieldValue(rentField))
+                {
+                    previousState.rent = currentState.rent;
+                }
             }
         };
 
         wagesField.getDocument().addDocumentListener(textFieldChangeListener);
-        rentField.getDocument().addDocumentListener(textFieldChangeListener);
+        loansField.getDocument().addDocumentListener(textFieldChangeListener);
         otherIncomeField.getDocument().addDocumentListener(textFieldChangeListener);
         foodField.getDocument().addDocumentListener(textFieldChangeListener);
         rentField.getDocument().addDocumentListener(textFieldChangeListener);
@@ -276,6 +339,20 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
 
     }
 
+    public boolean isStateChanged()
+    {
+        boolean pp = false;
+
+        pp |= Double.parseDouble(currentState.wages) != getTextFieldValue(wagesField);
+        pp |= Double.parseDouble(currentState.loans) != getTextFieldValue(loansField);
+        pp |= Double.parseDouble(currentState.otherIncome) != getTextFieldValue(otherIncomeField);
+        pp |= Double.parseDouble(currentState.food) != getTextFieldValue(foodField);
+        pp |= Double.parseDouble(currentState.rent) != getTextFieldValue(rentField);
+        pp |= Double.parseDouble(currentState.otherSpending) != getTextFieldValue(otherSpendingField);
+
+        return pp;
+    }
+
     // add a component at specified row and column in UI.  (0,0) is top-left corner
     private void addComponent(Component component, int gridrow, int gridcol) {
         layoutConstraints.fill = GridBagConstraints.HORIZONTAL;   // always use horixontsl filll
@@ -284,7 +361,6 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         add(component, layoutConstraints);
 
     }
-
 
     // update totalIncomeField (eg, when Calculate is pressed)
     // use double to hold numbers, so user can type fractional amounts such as 134.50
@@ -346,6 +422,28 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
         return overallTotal;
     }
 
+    public void calculateTimePeriodValues() {
+        String dateSelected = (String) comboTimePeriod.getSelectedItem();
+        if (dateSelected.equals("Weekly")) {
+            comboTimePeriod.setForeground(Color.GREEN);
+            weeklyTotalField.setText(String.format("%.2f",(calculateTotal())));
+            monthlyTotalField.setText(String.format("%.2f",(calculateTotal() * 4.333333)));
+            yearlyTotalField.setText(String.format("%.2f",(calculateTotal() * 52)));
+        }
+        else if (dateSelected.equals("Monthly")){
+            comboTimePeriod.setForeground(Color.GREEN);
+            weeklyTotalField.setText(String.format("%.2f",(calculateTotal() / 4.333333)));
+            monthlyTotalField.setText(String.format("%.2f",(calculateTotal())));
+            yearlyTotalField.setText(String.format("%.2f",(calculateTotal() * 12)));
+        }
+        else if (dateSelected.equals("Annually")){
+            comboTimePeriod.setForeground(Color.GREEN);
+            weeklyTotalField.setText(String.format("%.2f",(calculateTotal() / 52)));
+            monthlyTotalField.setText(String.format("%.2f",(calculateTotal() / 12)));
+            yearlyTotalField.setText(String.format("%.2f",(calculateTotal())));
+        }
+
+    }
     // return the value if a text field as a double
     // --return 0 if field is blank
     // --return NaN if field is not a number
@@ -367,7 +465,6 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             }
         }
     }
-
 
 // below is standard code to set up Swing, which students shouldnt need to edit much
     // standard mathod to show UI
@@ -397,6 +494,4 @@ public class BudgetBase extends JPanel {    // based on Swing JPanel
             }
         });
     }
-
-
 }
